@@ -1,6 +1,7 @@
 #include "Arduino.h"
 #include "Ramp.h"
 
+
 Ramp::Ramp(int temps[], int rates[], int times[], int stages)
 {
   _temps = temps;
@@ -8,6 +9,8 @@ Ramp::Ramp(int temps[], int rates[], int times[], int stages)
   _times = times;
   _stages = stages;
 }
+
+Ramp::Ramp(){}
 
 void Ramp::startRamp(int startTemp) {
   setNewTarget(startTemp, 0);
@@ -52,11 +55,11 @@ int Ramp::getTotalStages() {
 
 String Ramp::getTimeRemaining() {
   if (_state == 3) {
-    int elapsedTimeMins = (millis() - _timer) / 60000;
-    int remaining = _holdTime - elapsedTimeMins;
+    long elapsedTimeMins = (millis() - _timer) / 60000L;
+    long remaining = _holdTime - elapsedTimeMins;
     int mins = remaining % 60;
     int hours = remaining / 60;
-    return hours + ":" + mins;
+    return String(hours) + ":" + String(mins);
   } else {
     return "    ";
   }
@@ -76,11 +79,11 @@ int Ramp::getSetpoint(int temp) {
     }
 
     float ratePerSecond = float(_rate) / 3600.0;
-    int elapsedTime = (millis() - _timer) / 1000;
+    long elapsedTime = (millis() - _timer) / 1000;
 
     if (_state == 0) {
       //HEAT Mode
-      int setpoint = _startTemp + int(ratePerSecond * elapsedTime);
+      int setpoint = _startTemp + int(ratePerSecond * float(elapsedTime));
       if (setpoint >= _target) {
         _state = 2;
         return _target;
@@ -88,7 +91,7 @@ int Ramp::getSetpoint(int temp) {
       return setpoint;
     } else {
       //COOL Mode
-      int setpoint = _startTemp - int(ratePerSecond * elapsedTime);
+      int setpoint = _startTemp - int(ratePerSecond * float(elapsedTime));
       if (setpoint <= _target) {
         _state = 2;
         return _target;
@@ -107,8 +110,8 @@ int Ramp::getSetpoint(int temp) {
 
   } else {
     //state: 3, HOLD
-    int elapsedTimeSeconds = (millis() - _timer) / 1000;
-    int holdTimeSeconds = _holdTime * 60;
+    long elapsedTimeSeconds = (millis() - _timer) / 1000L;
+    long holdTimeSeconds = _holdTime * 60L;
     if (elapsedTimeSeconds >= holdTimeSeconds) {
       setNewTarget(temp, _stage + 1);
       return temp; //will start next itteration, for now hold at temp

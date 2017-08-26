@@ -5,6 +5,7 @@
 class Ramp
 {
   public:
+    Ramp();
     Ramp(int temps[], int rates[], int times[], int stages);
     int getSetpoint(int temp);
     void startRamp(int startTemp);
@@ -21,7 +22,7 @@ class Ramp
     int _target;
     int _rate;
     int _holdTime;
-    int _timer;
+    unsigned long _timer;
     int _stage;
     int _state; //0:HEAT 1:COOL 2:WAIT 3:HOLD
     int _startTemp;
