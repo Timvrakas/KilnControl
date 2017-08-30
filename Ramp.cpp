@@ -2,15 +2,21 @@
 #include "Ramp.h"
 
 
-Ramp::Ramp(int temps[], int rates[], int times[], int stages)
-{
+Ramp::Ramp() {}
+
+Ramp::Ramp(int temps[],int rates[],int times[],int stages) {
+  _stages = stages;
   _temps = temps;
   _rates = rates;
   _times = times;
-  _stages = stages;
 }
 
-Ramp::Ramp(){}
+void Ramp::debug(){
+  Serial.println(_stages);
+  for (int i = 0; i < 3; i++) {
+    Serial.println("Stage " + String(i) + ": goto " + _temps[i] + " at rate " + _rates[i] + " and hold for " + _times[i]);
+  }
+}
 
 void Ramp::startRamp(int startTemp) {
   setNewTarget(startTemp, 0);
@@ -50,7 +56,7 @@ String Ramp::getStateText() {
 }
 
 int Ramp::getTotalStages() {
-  return _stages;
+  return 3;
 }
 
 String Ramp::getTimeRemaining() {

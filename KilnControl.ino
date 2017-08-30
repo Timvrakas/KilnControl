@@ -27,71 +27,24 @@ unsigned long windowStartTime;
 Adafruit_MAX31855 thermocouple(THERM_CLK, THERM_CS, THERM_DO);
 LiquidCrystal lcd(A0, A1, A2, A3, A4, A5);
 
-String modeList[] = {"Dry Kiln     ",
-                     "Aluminum Melt",
-                     "Silver Melt  ",
-                     "Bisque Fire  "
-                    }; //UPDATE THIS FOR UI!
-int modes = 3;
-
-Ramp setupRamp(int mode) {
-  int stageTemps[10];
-  int stageRates[10];
-  int stageTimes[10];
-  int stages;
-  /*
-     Heating Stages: For each coresponding entry in the array table set:
-      Target Temp in Degrees Centigrade (0 Ends Program)
-      Rate of heating Degrees Centigrade per Hour (-1 is Max Heat)
-      Hold time in Mins
-  */
-  if (mode == 0) {
-    //HUMIDITY REMOVAL
-    int tmpStageTemps[] = { 80, 120, 0  };
-    int tmpStageRates[] = {100, 100, 200};
-    int tmpStageTimes[] = {120, 120, 0  };
-    stages = 3;
-    memcpy(tmpStageTemps, stageTemps, sizeof tmpStageTemps);
-    memcpy(tmpStageRates, stageRates, sizeof tmpStageRates);
-    memcpy(tmpStageTimes, stageTimes, sizeof tmpStageTimes);
-  } else if (mode == 1) {
-    //ALUMINUM FAST MELT
-    int tmpStageTemps[] = {800,   0};
-    int tmpStageRates[] = { -1, 200};
-    int tmpStageTimes[] = {180,   0};
-    stages = 2;
-    memcpy(tmpStageTemps, stageTemps, sizeof tmpStageTemps);
-    memcpy(tmpStageRates, stageRates, sizeof tmpStageRates);
-    memcpy(tmpStageTimes, stageTimes, sizeof tmpStageTimes);
-  } else if (mode == 2) {
-    //Silver FAST MELT
-    int tmpStageTemps[] = {1100,   0};
-    int tmpStageRates[] = {  -1, 200};
-    int tmpStageTimes[] = { 180,   0};
-    stages = 2;
-    memcpy(tmpStageTemps, stageTemps, sizeof tmpStageTemps);
-    memcpy(tmpStageRates, stageRates, sizeof tmpStageRates);
-    memcpy(tmpStageTimes, stageTimes, sizeof tmpStageTimes);
-  } else if (mode == 3) {
-    //RED CLAY BISQUE FIRE
-    int tmpStageTemps[] = {110, 287, 621, 1000, 0  };
-    int tmpStageRates[] = {100, 110, 165,  200, 200};
-    int tmpStageTimes[] = {180,  0,   0,    10, 0  };
-    stages = 5;
-    memcpy(tmpStageTemps, stageTemps, sizeof tmpStageTemps);
-    memcpy(tmpStageRates, stageRates, sizeof tmpStageRates);
-    memcpy(tmpStageTimes, stageTimes, sizeof tmpStageTimes);
-  }
-
-  Ramp rampObj(stageTemps, stageRates, stageTimes, stages);
-  return rampObj;
-}
-
 
 bool sdCardInited = false;
 unsigned long systimer;
 String filename;
 Ramp myRamp;
+
+int _temps[10];
+int _rates[10];
+int _times[10];
+int _stages;
+String modeList[] =
+{ "Dry Kiln     ",
+  "Aluminum Melt",
+  "Silver Melt  ",
+  "Bisque Fire  "
+};
+
+int modes = 4;
 
 
 void setup() {
@@ -161,8 +114,54 @@ void setup() {
       break;
     }
   }
-  myRamp = setupRamp(mode);
+  /************ MODE SETUP**************/
 
+  switch (mode) {
+    case 0: {
+        _stages = 3;
+        int Temps[] = { 80, 120, 0  };
+        int Rates[] = {100, 100, 200};
+        int Times[] = {120, 120, 0  };
+        memcpy( _temps, Temps , _stages * sizeof(int) );
+        memcpy( _rates, Rates , _stages * sizeof(int) );
+        memcpy( _times, Times , _stages * sizeof(int) );
+        break;
+      }
+    case 1: {
+        _stages = 2;
+        int Temps[] = {800,   0};
+        int Rates[] = { -1, 200};
+        int Times[] = {180,   0};
+        memcpy( _temps, Temps , _stages * sizeof(int) );
+        memcpy( _rates, Rates , _stages * sizeof(int) );
+        memcpy( _times, Times , _stages * sizeof(int) );
+        break;
+      }
+    case 2: {
+        _stages = 2;
+        int Temps[] = {1100,   0};
+        int Rates[] = {  -1, 200};
+        int Times[] = { 180,   0};
+        memcpy( _temps, Temps , _stages * sizeof(int) );
+        memcpy( _rates, Rates , _stages * sizeof(int) );
+        memcpy( _times, Times , _stages * sizeof(int) );
+        break;
+      }
+    case 3: {
+        _stages = 5;
+        int Temps[] = {110, 287, 621, 1000, 0  };
+        int Rates[] = {100, 110, 165,  200, 200};
+        int Times[] = {180,  0,   0,    10, 0  };
+        memcpy( _temps, Temps , _stages * sizeof(int) );
+        memcpy( _rates, Rates , _stages * sizeof(int) );
+        memcpy( _times, Times , _stages * sizeof(int) );
+        break;
+      }
+  }
+
+  Ramp tmpRamp(_temps, _rates, _times, _stages);
+  myRamp = tmpRamp;
+  myRamp.debug();
 
   /********** Starting Heat Cycle **********/
   //initialize the variables we're linked to
@@ -182,6 +181,7 @@ void setup() {
 }//setup
 
 void loop() {
+  myRamp.debug();
   /*******CALCULATE SETPOINT**********/
   double temperature = readTemp(0);
   Input = temperature;
@@ -235,7 +235,7 @@ void loop() {
   sprintf(secStr, "%lu", seconds);
   writeToSD(String(secStr) + ",loop," + relayState + "," + temperature + "," + Setpoint + "," + Output + "," + myRamp.getStateText() + "," + myRamp.getStage() + "/" + myRamp.getTotalStages() + "," + myRamp.getTimeRemaining());
   Serial.println(String(secStr) + ",loop," + relayState + "," + temperature + "," + Setpoint + "," + Output + "," + myRamp.getStateText() + "," + myRamp.getStage() + "/" + myRamp.getTotalStages() + "," + myRamp.getTimeRemaining());
-
+  myRamp.debug();
   delay(500);
 }//Loop
 

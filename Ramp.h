@@ -6,19 +6,20 @@ class Ramp
 {
   public:
     Ramp();
-    Ramp(int temps[], int rates[], int times[], int stages);
+    Ramp(int temps[],int rates[],int times[],int stages);
     int getSetpoint(int temp);
     void startRamp(int startTemp);
+    void debug();
     int getStage();
     int getState();
     String getStateText();
     int getTotalStages();
     String getTimeRemaining();
   private:
+    int _stages;
     int* _temps;
     int* _rates;
     int* _times;
-    int _stages;
     int _target;
     int _rate;
     int _holdTime;
