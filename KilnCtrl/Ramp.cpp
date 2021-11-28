@@ -56,7 +56,7 @@ String Ramp::getStateText() {
 }
 
 int Ramp::getTotalStages() {
-  return 3;
+  return _stages;
 }
 
 String Ramp::getTimeRemaining() {
